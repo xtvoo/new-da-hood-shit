@@ -459,6 +459,152 @@ elseif cmd:sub(1,5) == ".sit " then
     pcall(tpwheels)
     Phowg:Chat("Attempted to bring " .. target.Name .. " with bike seat.")
         
+elseif cmd:sub(1, 3) == "k! " then
+    local target_name_part = message:sub(4)
+    local target_player = FindPlayer(target_name_part)
+
+    if not target_player or not target_player.Character or not target_player.Character:FindFirstChild("HumanoidRootPart") then
+        return
+    end
+
+    local local_player = LocalPlayer
+    local runservice = game:GetService("RunService")
+    local owner_character = OWNER.Character
+    local replicated_storage = game:GetService("ReplicatedStorage")
+    local main_event = replicated_storage:FindFirstChild("MainEvent")
+
+    if not local_player.Character or not local_player.Character:FindFirstChild("HumanoidRootPart") then
+        return
+    end
+
+    local function BuyItem(item_name, item_price, num_times)
+        num_times = num_times or 1
+        local full_item_name = item_name .. " - $" .. item_price
+        local shop_item_path = workspace.Ignored.Shop[full_item_name]
+
+        if not shop_item_path then
+            return
+        end
+        local shop_item_head = shop_item_path:FindFirstChild("Head")
+        local shop_item_clickdetector = shop_item_path:FindFirstChild("ClickDetector")
+        if not shop_item_head or not shop_item_clickdetector then
+            return
+        end
+
+        for i = 1, num_times do
+            local_player.Character.HumanoidRootPart.CFrame = shop_item_head.CFrame * CFrame.new(0, -5, 0)
+            fireclickdetector(shop_item_clickdetector)
+            task.wait(0.1)
+        end
+    end
+
+    local function GetRifle()
+        local rifle = local_player.Backpack:FindFirstChild("[Rifle]")
+        if rifle then return rifle end
+        rifle = local_player.Character:FindFirstChild("[Rifle]")
+        return rifle
+    end
+
+    local function Reload()
+        local equipped_tool = local_player.Character:FindFirstChildWhichIsA("Tool")
+        if equipped_tool then
+            local ammo_value = equipped_tool:FindFirstChild("Ammo")
+            if ammo_value and ammo_value.Value <= 0 then
+                local body_effects = local_player.Character:FindFirstChild('BodyEffects')
+                if body_effects then
+                    local reload_effect = body_effects:FindFirstChild('Reload')
+                    if reload_effect and reload_effect.Value == false then
+                        main_event:FireServer("Reload", equipped_tool)
+                    end
+                end
+            end
+        end
+    end
+
+    if framework_module._killLoop then
+        framework_module._killLoop:Disconnect()
+        framework_module._killLoop = nil
+    end
+
+    if not GetRifle() then
+        BuyItem("[Rifle]", "1694", 1)
+        task.wait(0.5)
+    end
+
+    BuyItem("5 [Rifle Ammo]", "273", 5)
+    task.wait(0.5)
+
+    local rifle_tool = GetRifle()
+    if rifle_tool then
+        rifle_tool.Parent = local_player.Character
+        task.wait(0.1)
+    else
+        return
+    end
+
+    framework_module._killLoop = runservice.Heartbeat:Connect(function()
+        pcall(function()
+            if not target_player or not target_player.Character or not target_player.Character:FindFirstChild("HumanoidRootPart") then
+                if framework_module._killLoop then
+                    framework_module._killLoop:Disconnect()
+                    framework_module._killLoop = nil
+                end
+                local ownerPlayer = FindPlayer(OWNER)
+                if ownerPlayer and ownerPlayer.Character and ownerPlayer.Character:FindFirstChild("HumanoidRootPart") and BotHumanoidRootPart then
+                    BotHumanoidRootPart.CFrame = ownerPlayer.Character.HumanoidRootPart.CFrame
+                end
+                local equipped_tool = local_player.Character:FindFirstChildWhichIsA("Tool")
+                if equipped_tool and equipped_tool.Name == "[Rifle]" then
+                    equipped_tool.Parent = local_player.Backpack
+                end
+                return
+            end
+
+            local target_ko_effect = target_player.Character:FindFirstChild("BodyEffects") and target_player.Character.BodyEffects:FindFirstChild("K.O")
+            if target_ko_effect and target_ko_effect.Value == true then
+                if framework_module._killLoop then
+                    framework_module._killLoop:Disconnect()
+                    framework_module._killLoop = nil
+                end
+                local ownerPlayer = FindPlayer(OWNER)
+                if ownerPlayer and ownerPlayer.Character and ownerPlayer.Character:FindFirstChild("HumanoidRootPart") and BotHumanoidRootPart then
+                    BotHumanoidRootPart.CFrame = ownerPlayer.Character.HumanoidRootPart.CFrame
+                end
+                local equipped_tool = local_player.Character:FindFirstChildWhichIsA("Tool")
+                if equipped_tool and equipped_tool.Name == "[Rifle]" then
+                    equipped_tool.Parent = local_player.Backpack
+                end
+                return
+            end
+
+            local target_hrp = target_player.Character.HumanoidRootPart
+            local local_player_hrp = local_player.Character.HumanoidRootPart
+            local_player_hrp.CFrame = target_hrp.CFrame * CFrame.new(0, 5, 0)
+
+            Reload()
+
+            local gunHandle = local_player.Character:FindFirstChildWhichIsA("Tool"):FindFirstChild("Handle")
+            local targetHead = target_player.Character:FindFirstChild("Head")
+            local shooterPos = local_player.Character.HumanoidRootPart.Position
+            local targetPos = targetHead.Position
+
+            if gunHandle and targetHead then
+                local randomOffset1 = math.random(-12, 12)
+                local randomOffset2 = math.random(-12, 12)
+                local randomOffset3 = math.random(-12, 12)
+
+                main_event:FireServer(
+                    "ShootGun",
+                    gunHandle,
+                    shooterPos - Vector3.new(randomOffset2, randomOffset1, randomOffset2),
+                    targetPos - Vector3.new(randomOffset2, randomOffset2, randomOffset2),
+                    targetHead,
+                    Vector3.new(0, 0, -1)
+                )
+            end
+        end)
+    end)
+
     elseif cmd:sub(1,6) == ".nuke " then
         local args = {}
         for word in cmd:sub(7):gmatch("%S+") do
@@ -622,7 +768,8 @@ chat.MessageReceived:Connect(function(msg)
                 [".ar"] = ".armour",
                 [".fa"] = ".flingall",
                 [".fr"] = ".flingrandom",
-                [".mask"] = ".mask"
+                [".mask"] = ".mask",
+                ["k!"] = "k!"
             }
 
             local cmd_word = text:match("^%S+")
