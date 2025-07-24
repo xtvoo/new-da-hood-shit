@@ -144,6 +144,8 @@ local function grab_all_parts()
     end
 end
 
+
+
 local function auto_armour()
     local hasArmour = false
     if char and char:FindFirstChild("BodyEffects") then
@@ -154,7 +156,7 @@ local function auto_armour()
     end
     if not hasArmour then
         for _, item in pairs(workspace.Ignored.Shop:GetChildren()) do
-            if item.Name:find("%[Armour%]") and item:FindFirstChild("ClickDetector") and item:FindFirstChild("Head") then
+            if (item.Name:find("%[Armour%]") or item.Name:find("%[Armor%]")) and item:FindFirstChild("ClickDetector") and item:FindFirstChild("Head") then
                 local name, price = item.Name:match("^(%b[]) %- %$(%d+)$")
                 if name and price then
                     BuyItem(name, tonumber(price))
@@ -295,6 +297,18 @@ local function handle_cmd(cmd, sender)
         end
         Phowg:Chat("Player not found: " .. uname)
 
+    elseif cmd == ".mask" then
+        local maskItem = "[Mask]"
+        -- Check if mask is in backpack
+        if bkpk:FindFirstChild(maskItem) then
+            bkpk[maskItem].Parent = char
+            Phowg:Chat("Mask equipped from backpack!")
+        elseif char:FindFirstChild(maskItem) then
+            Phowg:Chat("Mask is already equipped!")
+        else
+            Phowg:Chat("Mask not found in backpack.")
+        end
+    
     elseif cmd:sub(1,7) == ".fling " then
         local partial = cmd:sub(8):lower()
         for _, p in pairs(players:GetPlayers()) do
