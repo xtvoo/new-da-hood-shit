@@ -613,7 +613,9 @@ chat.MessageReceived:Connect(function(msg)
                 [".n"]  = ".nuke",
                 [".rj"] = ".rejoin",
                 [".sit"] = ".sit",
-                [".ar"] = ".armour"
+                [".ar"] = ".armour",
+                [".fa"] = ".flingall",
+                [".fr"] = ".flingrandom"
             }
 
             local cmd_word = text:match("^%S+")
