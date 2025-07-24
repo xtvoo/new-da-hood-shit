@@ -1,3 +1,7 @@
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
 local players = game:GetService("Players")
 local chat = game:GetService("TextChatService")
 local runservice = game:GetService("RunService")
