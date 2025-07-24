@@ -1,7 +1,3 @@
-if not game:IsLoaded() then
-    game.Loaded:Wait()
-end
-
 local players = game:GetService("Players")
 local chat = game:GetService("TextChatService")
 local runservice = game:GetService("RunService")
@@ -333,10 +329,9 @@ local function handle_cmd(cmd, sender)
                 local myHRP = char.HumanoidRootPart
                 local targetHRP = fling_target.Character.HumanoidRootPart
                 reset_velocity()
-                -- Move your character directly into the target and spin rapidly to transfer velocity
-                myHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 0, 0)
-                myHRP.AssemblyLinearVelocity = (targetHRP.Position - myHRP.Position).Unit * 100 + Vector3.new(0, 50, 0)
-                myHRP.AssemblyAngularVelocity = Vector3.new(0, 99999, 0)
+                myHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 1, 0)
+                myHRP.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                myHRP.AssemblyAngularVelocity = Vector3.new(9999, 9999, 9999)
             else
                 if fling_loop then
                     fling_loop:Disconnect()
@@ -464,7 +459,7 @@ elseif cmd:sub(1,5) == ".sit " then
     pcall(tpwheels)
     Phowg:Chat("Attempted to bring " .. target.Name .. " with bike seat.")
         
-   elseif cmd:sub(1,6) == ".nuke " then
+    elseif cmd:sub(1,6) == ".nuke " then
         local args = {}
         for word in cmd:sub(7):gmatch("%S+") do
             table.insert(args, word)
@@ -472,55 +467,46 @@ elseif cmd:sub(1,5) == ".sit " then
         local bomb_count = tonumber(args[1])
         local target_name_part = table.concat(args, " ", 2)
         if not bomb_count or not target_name_part or target_name_part == "" then
-            Phowg:Chat("wrong usage")
+            Phowg:Chat("wrong usage: .nuke <count> <player>")
             return
         end
         -- Find player by partial name or display name
-        local function find_player_by_partial(partial)
+        local function find_player(partial)
             partial = partial:lower()
             for _, p in pairs(players:GetPlayers()) do
-                if p.Name:lower():find(partial) == 1 or p.DisplayName:lower():find(partial) == 1 then
+                if p.Name:lower():find(partial, 1, true) == 1 or (p.DisplayName and p.DisplayName:lower():find(partial, 1, true) == 1) then
                     return p
                 end
             end
             return nil
         end
-        local target_player = find_player_by_partial(target_name_part)
+        local target_player = find_player(target_name_part)
         if not target_player or not target_player.Character or not target_player.Character:FindFirstChild("HumanoidRootPart") then
-            Phowg:Chat("no plr")
+            Phowg:Chat("No player found or player has no HumanoidRootPart.")
             return
         end
-        -- Count grenades in backpack and character
+        bomb_count = math.min(11, bomb_count)
+        -- Use the already defined BuyItem function
+        BuyItem("[Grenade]", 765)
+        -- Wait until enough grenades are in inventory
         local function get_bomb_count()
             local count = 0
-            for _, v in ipairs(local_player.Backpack:GetChildren()) do
+            for _, v in ipairs(bkpk:GetChildren()) do
                 if v.Name == "[Grenade]" then
                     count = count + 1
                 end
             end
-            for _, v in ipairs(local_player.Character:GetChildren()) do
+            for _, v in ipairs(char:GetChildren()) do
                 if v.Name == "[Grenade]" then
                     count = count + 1
                 end
             end
             return count
         end
-        -- Buy grenades until count is reached
-        local function buy_bombs(item, price, count)
-            count = count or 1
-            while get_bomb_count() < count do
-                local shopItem = workspace.Ignored.Shop[item .. " - $" .. price]
-                if shopItem and shopItem:FindFirstChild("Head") and shopItem:FindFirstChild("ClickDetector") then
-                    CustomOffsets(shopItem.Head.CFrame * CFrame.new(0, -5, 0))
-                    fireclickdetector(shopItem.ClickDetector)
-                else
-                    break
-                end
-                task.wait()
-            end
+        while get_bomb_count() < bomb_count do
+            BuyItem("[Grenade]", 765)
+            task.wait(0.2)
         end
-        bomb_count = math.min(11, bomb_count)
-        buy_bombs("[Grenade]", 765, bomb_count)
         if framework_module._tp_bomb_conn then
             framework_module._tp_bomb_conn:Disconnect()
             framework_module._tp_bomb_conn = nil
@@ -555,6 +541,7 @@ elseif cmd:sub(1,5) == ".sit " then
             end)
         end)
     end
+end
 
 local function KO(v)
     if v.Character and v.Character:FindFirstChild("BodyEffects") then
