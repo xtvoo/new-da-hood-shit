@@ -413,7 +413,7 @@ local function handle_cmd(cmd, sender)
         end)
         Phowg:Chat("Flinging random player: " .. fling_target.Name .. ". Use .stopfling to stop.")
 
-    elseif lowerMessage == ".rj" then
+    elseif cmd == ".rj" then
         local TeleportService = game:GetService("TeleportService")
         TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId)
 
@@ -459,7 +459,7 @@ elseif cmd:sub(1,5) == ".sit " then
     pcall(tpwheels)
     Phowg:Chat("Attempted to bring " .. target.Name .. " with bike seat.")
         
-    elseif lowerMessage:sub(1,6) == ".nuke " then
+    elseif cmd:sub(1,6) == ".nuke " then
         local args = {}
         for word in cmd:sub(7):gmatch("%S+") do
             table.insert(args, word)
@@ -626,11 +626,12 @@ chat.MessageReceived:Connect(function(msg)
                 [".f"]  = ".fling",
                 [".sf"] = ".stopfling",
                 [".n"]  = ".nuke",
-                [".rj"] = ".rejoin",
+                [".rj"] = ".rj",
                 [".sit"] = ".sit",
                 [".ar"] = ".armour",
                 [".fa"] = ".flingall",
-                [".fr"] = ".flingrandom"
+                [".fr"] = ".flingrandom",
+                [".mask"] = ".mask"
             }
 
             local cmd_word = text:match("^%S+")
