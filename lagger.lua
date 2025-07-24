@@ -104,17 +104,22 @@ local function reset_velocity()
     end
 end
 
-local function equip_loop()
-    while is_looping do
-        for _, tool in ipairs(bkpk:GetChildren()) do
-            if tool:IsA("Tool") then
-                tool.Parent = char
-                tool.Parent = bkpk
-            end
+    if cmd == ".lag" then
+        if not is_looping then
+            is_looping = true
+            coroutine.wrap(function()
+                while is_looping do
+                    for _, tool in ipairs(bkpk:GetChildren()) do
+                        if tool:IsA("Tool") then
+                            tool.Parent = char
+                            task.wait(0.1)
+                            tool.Parent = bkpk
+                        end
+                    end
+                    task.wait()
+                end
+            end)()
         end
-        task.wait(0.1)
-    end
-end
 
 local function get_big_num()
     return math.random(999999999999999999, 9999999999999999999)
