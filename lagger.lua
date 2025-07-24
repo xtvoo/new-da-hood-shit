@@ -329,9 +329,10 @@ local function handle_cmd(cmd, sender)
                 local myHRP = char.HumanoidRootPart
                 local targetHRP = fling_target.Character.HumanoidRootPart
                 reset_velocity()
-                myHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 1, 0)
-                myHRP.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-                myHRP.AssemblyAngularVelocity = Vector3.new(9999, 9999, 9999)
+                -- Move your character directly into the target and spin rapidly to transfer velocity
+                myHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 0, 0)
+                myHRP.AssemblyLinearVelocity = (targetHRP.Position - myHRP.Position).Unit * 100 + Vector3.new(0, 50, 0)
+                myHRP.AssemblyAngularVelocity = Vector3.new(0, 99999, 0)
             else
                 if fling_loop then
                     fling_loop:Disconnect()
@@ -459,97 +460,96 @@ elseif cmd:sub(1,5) == ".sit " then
     pcall(tpwheels)
     Phowg:Chat("Attempted to bring " .. target.Name .. " with bike seat.")
         
-    elseif cmd:sub(1,6) == ".nuke " then
-        local args = {}
-        for word in cmd:sub(7):gmatch("%S+") do
-            table.insert(args, word)
-        end
-        local bomb_count = tonumber(args[1])
-        local target_name_part = table.concat(args, " ", 2)
-        if not bomb_count or not target_name_part then
-            Phowg:Chat("wrong usage")
-            return
-        end
-        local target_player = FindPlayer(target_name_part)
-        if not target_player or not target_player.Character or not target_player.Character:FindFirstChild("HumanoidRootPart") then
-            Phowg:Chat("no plr")
-            return
-        end
-        local local_player = LocalPlayer
-        local runservice = RunService
-        local function CustomOffsets(x)
-            local LastPos = local_player.Character.HumanoidRootPart.CFrame
-            local_player.Character.Humanoid.CameraOffset = x:ToObjectSpace(CFrame.new(LastPos.Position)).Position
-            local_player.Character.HumanoidRootPart.CFrame = x
-            runservice.RenderStepped:Wait()
-            local_player.Character.HumanoidRootPart.CFrame = LastPos
-            local_player.Character.Humanoid.CameraOffset = LastPos:ToObjectSpace(CFrame.new(LastPos.Position)).Position
-        end
+   elseif cmd:sub(1,6) == ".nuke " then
+    local args = {}
+    for word in cmd:sub(7):gmatch("%S+") do
+        table.insert(args, word)
+    end
+    local bomb_count = tonumber(args[1])
+    local target_name_part = table.concat(args, " ", 2)
+    if not bomb_count or not target_name_part then
+        ChatMessage("wrong usage")
+        return
+    end
+    local target_player = FindPlayer(target_name_part)
+    if not target_player or not target_player.Character or not target_player.Character:FindFirstChild("HumanoidRootPart") then
+        ChatMessage("no plr")
+        return
+    end
+    local local_player = LocalPlayer
+    local runservice = RunService
+    local function CustomOffsets(x)
+        local LastPos = local_player.Character.HumanoidRootPart.CFrame
+        local_player.Character.Humanoid.CameraOffset = x:ToObjectSpace(CFrame.new(LastPos.Position)).Position
+        local_player.Character.HumanoidRootPart.CFrame = x
+        runservice.RenderStepped:Wait()
+        local_player.Character.HumanoidRootPart.CFrame = LastPos
+        local_player.Character.Humanoid.CameraOffset = LastPos:ToObjectSpace(CFrame.new(LastPos.Position)).Position
+    end
 
-        local function GetBombCount()
-            local count = 0
-            for _, v in ipairs(local_player.Backpack:GetChildren()) do
-                if v.Name == "[Grenade]" then
-                    count = count + 1
-                end
+    local function GetBombCount()
+        local count = 0
+        for _, v in ipairs(local_player.Backpack:GetChildren()) do
+            if v.Name == "[Grenade]" then
+                count = count + 1
             end
-            for _, v in ipairs(local_player.Character:GetChildren()) do
-                if v.Name == "[Grenade]" then
-                    count = count + 1
-                end
-            end
-            return count
         end
+        for _, v in ipairs(local_player.Character:GetChildren()) do
+            if v.Name == "[Grenade]" then
+                count = count + 1
+            end
+        end
+        return count
+    end
 
-        local function BuyItem(item, price, count)
-            count = count or 1
-            while GetBombCount() < count do
-                local shopItem = workspace.Ignored.Shop[item .. " - $" .. price]
-                if shopItem and shopItem:FindFirstChild("Head") and shopItem:FindFirstChild("ClickDetector") then
-                    CustomOffsets(shopItem.Head.CFrame * CFrame.new(0, -5, 0))
-                    fireclickdetector(shopItem.ClickDetector)
-                else
-                    break
-                end
-                task.wait()
+    local function BuyItem(item, price, count)
+        count = count or 1
+        while GetBombCount() < count do
+            local shopItem = workspace.Ignored.Shop[item .. " - $" .. price]
+            if shopItem and shopItem:FindFirstChild("Head") and shopItem:FindFirstChild("ClickDetector") then
+                CustomOffsets(shopItem.Head.CFrame * CFrame.new(0, -5, 0))
+                fireclickdetector(shopItem.ClickDetector)
+            else
+                break
             end
+            task.wait()
         end
-        bomb_count = math.min(11, bomb_count)
-        BuyItem("[Grenade]", 765, bomb_count)
-        if framework_module._tp_bomb_conn then
-            framework_module._tp_bomb_conn:Disconnect()
-            framework_module._tp_bomb_conn = nil
-        end
-        framework_module._tp_bomb_conn = runservice.Heartbeat:Connect(function()
-            pcall(function()
-                for _, v in ipairs(workspace.Ignored:GetChildren()) do
-                    if v.Name == "Handle" or (v.Name == "Part" and not v.Anchored) then
-                        v.Velocity = Vector3.new(0,50,0)
-                        v.CanCollide = false
-                        local char = target_player.Character
-                        if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("UpperTorso") and char:FindFirstChildOfClass("Humanoid") then
-                            local pos = char.UpperTorso.Position + (char.Humanoid.MoveDirection * 0.5 * char.Humanoid.WalkSpeed)
-                            if (v.Position - char.HumanoidRootPart.Position).Magnitude < 30 then
-                                local bp = v:FindFirstChildWhichIsA("BodyPosition")
-                                if bp then bp:Destroy() end
-                                v.CFrame = CFrame.new(pos)
-                            else
-                                local bp = v:FindFirstChildWhichIsA("BodyPosition")
-                                if not bp then
-                                    bp = Instance.new("BodyPosition")
-                                    bp.Parent = v
-                                end
-                                bp.MaxForce = Vector3.new(1e9,1e9,1e9)
-                                bp.Position = pos
-                                bp.P = 10000
-                                bp.D = 175
+    end
+    bomb_count = math.min(11, bomb_count)
+    BuyItem("[Grenade]", 765, bomb_count)
+    if framework_module._tp_bomb_conn then
+        framework_module._tp_bomb_conn:Disconnect()
+        framework_module._tp_bomb_conn = nil
+    end
+    framework_module._tp_bomb_conn = runservice.Heartbeat:Connect(function()
+        pcall(function()
+            for _, v in ipairs(workspace.Ignored:GetChildren()) do
+                if v.Name == "Handle" or (v.Name == "Part" and not v.Anchored) then
+                    v.Velocity = Vector3.new(0,50,0)
+                    v.CanCollide = false
+                    local char = target_player.Character
+                    if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("UpperTorso") and char:FindFirstChildOfClass("Humanoid") then
+                        local pos = char.UpperTorso.Position + (char.Humanoid.MoveDirection * 0.5 * char.Humanoid.WalkSpeed)
+                        if (v.Position - char.HumanoidRootPart.Position).Magnitude < 30 then
+                            local bp = v:FindFirstChildWhichIsA("BodyPosition")
+                            if bp then bp:Destroy() end
+                            v.CFrame = CFrame.new(pos)
+                        else
+                            local bp = v:FindFirstChildWhichIsA("BodyPosition")
+                            if not bp then
+                                bp = Instance.new("BodyPosition")
+                                bp.Parent = v
                             end
+                            bp.MaxForce = Vector3.new(1e9,1e9,1e9)
+                            bp.Position = pos
+                            bp.P = 10000
+                            bp.D = 175
                         end
                     end
                 end
-            end)
+            end
         end)
-    end
+    end)
 end
 
 local function KO(v)
