@@ -315,18 +315,92 @@ local function handle_cmd(cmd, sender)
                 local targetHRP = fling_target.Character.HumanoidRootPart
                 reset_velocity()
                 myHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 1, 0)
-                myHRP.Velocity = Vector3.new(0, 0, 0)
-                myHRP.RotVelocity = Vector3.new(9999, 9999, 9999)
+                myHRP.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                myHRP.AssemblyAngularVelocity = Vector3.new(9999, 9999, 9999)
             else
-                fling_loop:Disconnect()
-                fling_loop = nil
-                fling_target = nil
+                if fling_loop then
+                    fling_loop:Disconnect()
+                    fling_loop = nil
+                    fling_target = nil
+                end
             end
         end)
+        Phowg:Chat("Flinging " .. fling_target.Name .. ". Use .stopfling to stop.")
+
+    elseif cmd == ".flingall" then
+        -- Fling all players except self and owner
+        local targets = {}
+        for _, p in pairs(players:GetPlayers()) do
+            if p ~= player and p.Name ~= owner_name and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                table.insert(targets, p)
+            end
+        end
+        if #targets == 0 then
+            Phowg:Chat("No valid players to fling.")
+            return
+        end
+        if fling_loop then fling_loop:Disconnect() end
+
+        local idx = 1
+        fling_loop = runservice.Stepped:Connect(function()
+            if #targets == 0 or not char or not char:FindFirstChild("HumanoidRootPart") then
+                if fling_loop then
+                    fling_loop:Disconnect()
+                    fling_loop = nil
+                end
+                return
+            end
+            local target = targets[idx]
+            if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+                local myHRP = char.HumanoidRootPart
+                local targetHRP = target.Character.HumanoidRootPart
+                reset_velocity()
+                myHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 1, 0)
+                myHRP.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                myHRP.AssemblyAngularVelocity = Vector3.new(9999, 9999, 9999)
+            end
+            idx = idx + 1
+            if idx > #targets then idx = 1 end
+        end)
+        Phowg:Chat("Flinging all players. Use .stopfling to stop.")
+
+    elseif cmd == ".flingrandom" then
+        -- Fling a random player except self and owner
+        local candidates = {}
+        for _, p in pairs(players:GetPlayers()) do
+            if p ~= player and p.Name ~= owner_name and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                table.insert(candidates, p)
+            end
+        end
+        if #candidates == 0 then
+            Phowg:Chat("No valid players to fling.")
+            return
+        end
+        fling_target = candidates[math.random(1, #candidates)]
+        if fling_loop then fling_loop:Disconnect() end
+
+        fling_loop = runservice.Stepped:Connect(function()
+            if fling_target and fling_target.Character and fling_target.Character:FindFirstChild("HumanoidRootPart")
+                and char and char:FindFirstChild("HumanoidRootPart") then
+                local myHRP = char.HumanoidRootPart
+                local targetHRP = fling_target.Character.HumanoidRootPart
+                reset_velocity()
+                myHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 1, 0)
+                myHRP.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                myHRP.AssemblyAngularVelocity = Vector3.new(9999, 9999, 9999)
+            else
+                if fling_loop then
+                    fling_loop:Disconnect()
+                    fling_loop = nil
+                    fling_target = nil
+                end
+            end
+        end)
+        Phowg:Chat("Flinging random player: " .. fling_target.Name .. ". Use .stopfling to stop.")
 
     elseif lowerMessage == ".rj" then
-    local TeleportService = game:GetService("TeleportService")
-    TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId)
+        local TeleportService = game:GetService("TeleportService")
+        TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId)
 
     elseif cmd == ".stopfling" then
         if fling_loop then
