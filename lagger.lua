@@ -2,7 +2,7 @@ local players = game:GetService("Players")
 local chat = game:GetService("TextChatService")
 local runservice = game:GetService("RunService")
 local player = players.LocalPlayer
-local owner_name = "HazelChillChase"
+local owner_name = "Haremelito"
 local local_player = player
 
 if player.Name == owner_name then return end
@@ -789,3 +789,4 @@ chat.MessageReceived:Connect(function(msg)
         end
     end
 end)
+
