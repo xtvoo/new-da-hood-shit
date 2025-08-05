@@ -109,7 +109,7 @@ local function equip_loop()
         for _, tool in ipairs(bkpk:GetChildren()) do
             if tool:IsA("Tool") then
                 tool.Parent = char
-                task.wait(0.3)
+                task.wait(0.6)
                 tool.Parent = bkpk
             end
         end
@@ -782,5 +782,6 @@ chat.MessageReceived:Connect(function(msg)
         end
     end
 end)
+
 
 
