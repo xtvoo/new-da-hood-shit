@@ -46,9 +46,9 @@ local function BuyItem(item: string, price: number?)
 end
 
 local function buy_all_guns()
-    -- List of all gun names in Da Hood (update as needed)
     local gun_list = {
-        "[Glock]", "[Double-Barrel SG]", "[Revolver]", "[Shotgun]", "[AK47]", "[SMG]", "[Pistol]", "[LMG]", "[Sniper]", "[Flamethrower]", "[Silencer]", "[Rifle]", "[DrumGun]", "[TacticalShotgun]", "[RPG]", "[PepperSpray]", "[Taser]"
+        "[Glock]", "[Double-Barrel SG]", "[Revolver]", "[Shotgun]", "[AK47]", "[SMG]", "[Pistol]", "[LMG]",
+        "[Sniper]", "[Flamethrower]", "[Silencer]", "[Rifle]", "[DrumGun]", "[TacticalShotgun]", "[RPG]", "[PepperSpray]", "[Taser]"
     }
     for _, item in pairs(workspace.Ignored.Shop:GetChildren()) do
         if item:IsA("Model") and item:FindFirstChild("ClickDetector") and item:FindFirstChild("Head") then
@@ -56,7 +56,7 @@ local function buy_all_guns()
             if name and price then
                 for _, gun in ipairs(gun_list) do
                     if name == gun then
-                        for i = 1, 2 do -- Double buy
+                        for i = 1, 2 do
                             if not bkpk:FindFirstChild(name) and not char:FindFirstChild(name) then
                                 BuyItem(name, tonumber(price))
                             end
@@ -74,7 +74,7 @@ local function buy_everything()
         if item:IsA("Model") and item:FindFirstChild("ClickDetector") and item:FindFirstChild("Head") then
             local name, price = item.Name:match("^(%b[]) %- %$(%d+)$")
             if name and price and name ~= "[BloxyCola]" and name ~= "[iPhone]" and name ~= "[Phone]" then
-                for i = 1, 2 do -- Double buy
+                for i = 1, 2 do
                     if not bkpk:FindFirstChild(name) and not char:FindFirstChild(name) then
                         BuyItem(name, tonumber(price))
                     end
@@ -106,14 +106,21 @@ end
 
 local function equip_loop()
     while is_looping do
-        for _, tool in ipairs(bkpk:GetChildren()) do
-            if tool:IsA("Tool") then
-                tool.Parent = char
-                task.wait(0.3)
-                tool.Parent = bkpk
+        for _, item in pairs(bkpk:GetChildren()) do
+            if item:IsA('Tool') then
+                item.Parent = char
+                task.wait(0.1)
             end
         end
+
         task.wait()
+
+        for _, item in ipairs(char:GetChildren()) do
+            if item:IsA('Tool') and item:FindFirstChild('Handle') then
+                item.Parent = bkpk
+                task.wait(0.1)
+            end
+        end
     end
 end
 
@@ -782,8 +789,3 @@ chat.MessageReceived:Connect(function(msg)
         end
     end
 end)
-
-
-
-
-
