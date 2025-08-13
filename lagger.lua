@@ -112,9 +112,9 @@ end
 
 local function equip_loop()
     while is_looping do
-        -- Move all tools except [Combat] from backpack to character
+        -- Move all tools except those with "combat" in the name from backpack to character
         for _, item in pairs(bkpk:GetChildren()) do
-            if item:IsA('Tool') and item.Name ~= "[Combat]" then
+            if item:IsA('Tool') and not string.match(item.Name:lower(), "combat") then
                 item.Parent = char
                 task.wait(0.1)
             end
@@ -122,9 +122,9 @@ local function equip_loop()
 
         task.wait()
 
-        -- Move all tools except [Combat] from character back to backpack
+        -- Move all tools except those with "combat" in the name from character back to backpack
         for _, item in ipairs(char:GetChildren()) do
-            if item:IsA('Tool') and item.Name ~= "[Combat]" then
+            if item:IsA('Tool') and not string.match(item.Name:lower(), "combat") then
                 item.Parent = bkpk
                 task.wait(0.1)
             end
