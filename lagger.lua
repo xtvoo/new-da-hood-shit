@@ -336,10 +336,17 @@ local function handle_cmd(cmd, sender)
                 and char and char:FindFirstChild("HumanoidRootPart") then
                 local myHRP = char.HumanoidRootPart
                 local targetHRP = fling_target.Character.HumanoidRootPart
-                reset_velocity()
+
+                -- Stick to the target's HumanoidRootPart
                 myHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 0, 0)
+                -- Apply high angular velocity to fling the target
                 myHRP.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-                myHRP.AssemblyAngularVelocity = Vector3.new(9999, 9999, 9999)
+                myHRP.AssemblyAngularVelocity = Vector3.new(99999, 99999, 99999)
+
+                -- Also try to anchor/unanchor the target for more effect
+                pcall(function()
+                    targetHRP.Anchored = false
+                end)
             else
                 if fling_loop then
                     fling_loop:Disconnect()
@@ -348,7 +355,7 @@ local function handle_cmd(cmd, sender)
                 end
             end
         end)
-        Phowg:Chat("Sticking and flinging " .. fling_target.Name .. " non-stop. Use .stopfling to stop.")
+        Phowg:Chat("Sticking to and flinging " .. fling_target.Name .. ". Use .stopfling to stop.")
 
     elseif cmd == ".flingall" then
         local targets = {}
