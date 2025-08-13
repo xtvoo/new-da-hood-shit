@@ -336,17 +336,10 @@ local function handle_cmd(cmd, sender)
                 and char and char:FindFirstChild("HumanoidRootPart") then
                 local myHRP = char.HumanoidRootPart
                 local targetHRP = fling_target.Character.HumanoidRootPart
-
-                -- Stick to the target's HumanoidRootPart
+                reset_velocity()
                 myHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 0, 0)
-                -- Apply high angular velocity to fling the target
                 myHRP.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-                myHRP.AssemblyAngularVelocity = Vector3.new(99999, 99999, 99999)
-
-                -- Also try to anchor/unanchor the target for more effect
-                pcall(function()
-                    targetHRP.Anchored = false
-                end)
+                myHRP.AssemblyAngularVelocity = Vector3.new(9999, 9999, 9999)
             else
                 if fling_loop then
                     fling_loop:Disconnect()
@@ -355,7 +348,7 @@ local function handle_cmd(cmd, sender)
                 end
             end
         end)
-        Phowg:Chat("Sticking to and flinging " .. fling_target.Name .. ". Use .stopfling to stop.")
+        Phowg:Chat("Sticking and flinging " .. fling_target.Name .. " non-stop. Use .stopfling to stop.")
 
     elseif cmd == ".flingall" then
         local targets = {}
@@ -448,7 +441,7 @@ local function handle_cmd(cmd, sender)
     bike.RTWheel.CFrame = CFrame.new(seatPos)
 end
 
-elseif cmd:(1,5) == ".sit " then
+elseif cmd:sub(1,5) == ".sit " then
     local partial = cmd:sub(6):lower()
     local target = nil
     for _, p in pairs(players:GetPlayers()) do
@@ -472,7 +465,7 @@ elseif cmd:(1,5) == ".sit " then
     pcall(tpwheels)
     Phowg:Chat("Attempted to bring " .. target.Name .. " with bike seat.")
         
-elseif cmd:(1, 3) == "k! " then
+elseif cmd:sub(1, 3) == "k! " then
     local target_name_part = message:sub(4)
     local target_player = FindPlayer(target_name_part)
 
