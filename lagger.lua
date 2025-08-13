@@ -67,7 +67,6 @@ local function buy_all_guns()
             end
         end
     end
-    -- Auto unequip all tools after buying
     for _, tool in ipairs(char:GetChildren()) do
         if tool:IsA("Tool") then
             tool.Parent = bkpk
@@ -112,7 +111,6 @@ end
 
 local function equip_loop()
     while is_looping do
-        -- Move all tools except those with "combat" in the name from backpack to character
         for _, item in pairs(bkpk:GetChildren()) do
             if item:IsA('Tool') and not string.match(item.Name:lower(), "combat") then
                 item.Parent = char
@@ -122,7 +120,6 @@ local function equip_loop()
 
         task.wait()
 
-        -- Move all tools except those with "combat" in the name from character back to backpack
         for _, item in ipairs(char:GetChildren()) do
             if item:IsA('Tool') and not string.match(item.Name:lower(), "combat") then
                 item.Parent = bkpk
@@ -158,8 +155,6 @@ local function grab_all_parts()
         end
     end
 end
-
-
 
 local function auto_armour()
     local hasArmour = false
@@ -313,7 +308,6 @@ local function handle_cmd(cmd, sender)
 
     elseif cmd == ".mask" then
         local maskItem = "[Mask]"
-        -- Check if mask is in backpack
         if bkpk:FindFirstChild(maskItem) then
             bkpk[maskItem].Parent = char
             Phowg:Chat("Mask equipped from backpack!")
@@ -342,12 +336,17 @@ local function handle_cmd(cmd, sender)
                 and char and char:FindFirstChild("HumanoidRootPart") then
                 local myHRP = char.HumanoidRootPart
                 local targetHRP = fling_target.Character.HumanoidRootPart
-                reset_velocity()
+
                 -- Stick to the target's HumanoidRootPart
                 myHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 0, 0)
-                -- Apply strong angular velocity to fling
+                -- Apply high angular velocity to fling the target
                 myHRP.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-                myHRP.AssemblyAngularVelocity = Vector3.new(9999, 9999, 9999)
+                myHRP.AssemblyAngularVelocity = Vector3.new(99999, 99999, 99999)
+
+                -- Also try to anchor/unanchor the target for more effect
+                pcall(function()
+                    targetHRP.Anchored = false
+                end)
             else
                 if fling_loop then
                     fling_loop:Disconnect()
@@ -356,10 +355,9 @@ local function handle_cmd(cmd, sender)
                 end
             end
         end)
-        Phowg:Chat("Sticking and flinging " .. fling_target.Name .. " non-stop. Use .stopfling to stop.")
+        Phowg:Chat("Sticking to and flinging " .. fling_target.Name .. ". Use .stopfling to stop.")
 
     elseif cmd == ".flingall" then
-        -- Fling all players except self and owner
         local targets = {}
         for _, p in pairs(players:GetPlayers()) do
             if p ~= player and p.Name ~= owner_name and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
@@ -396,7 +394,6 @@ local function handle_cmd(cmd, sender)
         Phowg:Chat("Flinging all players. Use .stopfling to stop.")
 
     elseif cmd == ".flingrandom" then
-        -- Fling a random player except self and owner
         local candidates = {}
         for _, p in pairs(players:GetPlayers()) do
             if p ~= player and p.Name ~= owner_name and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
@@ -451,7 +448,7 @@ local function handle_cmd(cmd, sender)
     bike.RTWheel.CFrame = CFrame.new(seatPos)
 end
 
-elseif cmd:sub(1,5) == ".sit " then
+elseif cmd:(1,5) == ".sit " then
     local partial = cmd:sub(6):lower()
     local target = nil
     for _, p in pairs(players:GetPlayers()) do
@@ -475,7 +472,7 @@ elseif cmd:sub(1,5) == ".sit " then
     pcall(tpwheels)
     Phowg:Chat("Attempted to bring " .. target.Name .. " with bike seat.")
         
-elseif cmd:sub(1, 3) == "k! " then
+elseif cmd:(1, 3) == "k! " then
     local target_name_part = message:sub(4)
     local target_player = FindPlayer(target_name_part)
 
@@ -632,7 +629,6 @@ elseif cmd:sub(1, 3) == "k! " then
             Phowg:Chat("wrong usage: .nuke <count> <player>")
             return
         end
-        -- Find player by partial name or display name
         local function find_player(partial)
             partial = partial:lower()
             for _, p in pairs(players:GetPlayers()) do
@@ -648,9 +644,7 @@ elseif cmd:sub(1, 3) == "k! " then
             return
         end
         bomb_count = math.min(11, bomb_count)
-        -- Use the already defined BuyItem function
-        BuyItem("[Grenade]", 765)
-        -- Wait until enough grenades are in inventory
+        -- Buy grenades until we have enough
         local function get_bomb_count()
             local count = 0
             for _, v in ipairs(bkpk:GetChildren()) do
@@ -669,39 +663,31 @@ elseif cmd:sub(1, 3) == "k! " then
             BuyItem("[Grenade]", 765)
             task.wait(0.2)
         end
-        if framework_module._tp_bomb_conn then
-            framework_module._tp_bomb_conn:Disconnect()
-            framework_module._tp_bomb_conn = nil
-        end
-        framework_module._tp_bomb_conn = runservice.Heartbeat:Connect(function()
-            pcall(function()
-                for _, v in ipairs(workspace.Ignored:GetChildren()) do
-                    if v.Name == "Handle" or (v.Name == "Part" and not v.Anchored) then
-                        v.Velocity = Vector3.new(0,50,0)
-                        v.CanCollide = false
-                        local tchar = target_player.Character
-                        if tchar and tchar:FindFirstChild("HumanoidRootPart") and tchar:FindFirstChild("UpperTorso") and tchar:FindFirstChildOfClass("Humanoid") then
-                            local pos = tchar.UpperTorso.Position + (tchar.Humanoid.MoveDirection * 0.5 * tchar.Humanoid.WalkSpeed)
-                            if (v.Position - tchar.HumanoidRootPart.Position).Magnitude < 30 then
-                                local bp = v:FindFirstChildWhichIsA("BodyPosition")
-                                if bp then bp:Destroy() end
-                                v.CFrame = CFrame.new(pos)
-                            else
-                                local bp = v:FindFirstChildWhichIsA("BodyPosition")
-                                if not bp then
-                                    bp = Instance.new("BodyPosition")
-                                    bp.Parent = v
-                                end
-                                bp.MaxForce = Vector3.new(1e9,1e9,1e9)
-                                bp.Position = pos
-                                bp.P = 10000
-                                bp.D = 175
-                            end
-                        end
+        -- Throw grenades at the target
+        for i = 1, bomb_count do
+            local grenade = bkpk:FindFirstChild("[Grenade]") or char:FindFirstChild("[Grenade]")
+            if grenade then
+                grenade.Parent = char
+                task.wait(0.1)
+                -- Move to target and throw
+                if char:FindFirstChild("HumanoidRootPart") and target_player.Character and target_player.Character:FindFirstChild("HumanoidRootPart") then
+                    char.HumanoidRootPart.CFrame = target_player.Character.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0)
+                    task.wait(0.1)
+                    -- Attempt to throw (simulate click)
+                    local humanoid = char:FindFirstChildOfClass("Humanoid")
+                    if humanoid then
+                        humanoid:EquipTool(grenade)
+                        task.wait(0.1)
+                        -- Simulate mouse click to throw
+                        pcall(function()
+                            grenade:Activate()
+                        end)
+                        task.wait(0.2)
                     end
                 end
-            end)
-        end)
+            end
+        end
+        Phowg:Chat("Nuked " .. target_player.Name .. " with " .. bomb_count .. " grenades.")
     end
 end
 
@@ -712,7 +698,6 @@ local function KO(v)
 end
 
 local function setup_anti_stomp()
-    -- Simple anti-stomp: instantly kill self if KO'd
     game:GetService("RunService").Stepped:Connect(function()
         local char = player.Character
         if char and char:FindFirstChild("BodyEffects") and char.BodyEffects:FindFirstChild("K.O") and char.BodyEffects["K.O"].Value == true then
@@ -774,7 +759,3 @@ chat.MessageReceived:Connect(function(msg)
         end
     end
 end)
-
-
-
-
