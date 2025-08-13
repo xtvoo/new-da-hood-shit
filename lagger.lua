@@ -67,6 +67,12 @@ local function buy_all_guns()
             end
         end
     end
+    -- Auto unequip all tools after buying
+    for _, tool in ipairs(char:GetChildren()) do
+        if tool:IsA("Tool") then
+            tool.Parent = bkpk
+        end
+    end
 end
 
 local function buy_everything()
@@ -107,7 +113,7 @@ end
 local function equip_loop()
     while is_looping do
         for _, item in pairs(bkpk:GetChildren()) do
-            if item:IsA('Tool') then
+            if item:IsA('Tool') and item.Name ~= "[Combat]" then
                 item.Parent = char
                 task.wait(0.1)
             end
@@ -116,7 +122,7 @@ local function equip_loop()
         task.wait()
 
         for _, item in ipairs(char:GetChildren()) do
-            if item:IsA('Tool') and item:FindFirstChild('Handle') then
+            if item:IsA('Tool') and item:FindFirstChild('Handle') and item.Name ~= "[Combat]" then
                 item.Parent = bkpk
                 task.wait(0.1)
             end
@@ -789,6 +795,7 @@ chat.MessageReceived:Connect(function(msg)
         end
     end
 end)
+
 
 
 
