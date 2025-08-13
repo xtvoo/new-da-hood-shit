@@ -644,7 +644,7 @@ elseif cmd:sub(1, 3) == "k! " then
             return
         end
         bomb_count = math.min(11, bomb_count)
-        -- Buy grenades until we have enough
+        -- Buy grenades as fast as possible
         local function get_bomb_count()
             local count = 0
             for _, v in ipairs(bkpk:GetChildren()) do
@@ -659,37 +659,52 @@ elseif cmd:sub(1, 3) == "k! " then
             end
             return count
         end
+        local buy_threads = {}
         while get_bomb_count() < bomb_count do
-            BuyItem("[Grenade]", 765)
-            task.wait(0.2)
+            table.insert(buy_threads, coroutine.create(function()
+                BuyItem("[Grenade]", 765)
+            end))
+            if #buy_threads >= 4 then -- spawn up to 4 at a time for speed
+                for _, co in ipairs(buy_threads) do coroutine.resume(co) end
+                buy_threads = {}
+            end
         end
-        -- Throw grenades at the target
+        for _, co in ipairs(buy_threads) do coroutine.resume(co) end
+        -- Wait until we have enough grenades
+        while get_bomb_count() < bomb_count do task.wait(0.05) end
+        -- Throw all grenades at once, sticking them to the target
+        local grenades = {}
+        for _, v in ipairs(bkpk:GetChildren()) do
+            if v.Name == "[Grenade]" then table.insert(grenades, v) end
+        end
+        for _, v in ipairs(char:GetChildren()) do
+            if v.Name == "[Grenade]" then table.insert(grenades, v) end
+        end
         for i = 1, bomb_count do
-            local grenade = bkpk:FindFirstChild("[Grenade]") or char:FindFirstChild("[Grenade]")
+            local grenade = grenades[i]
             if grenade then
                 grenade.Parent = char
-                task.wait(0.1)
-                -- Move to target and throw
-                if char:FindFirstChild("HumanoidRootPart") and target_player.Character and target_player.Character:FindFirstChild("HumanoidRootPart") then
-                    char.HumanoidRootPart.CFrame = target_player.Character.HumanoidRootPart.CFrame * CFrame.new(0, 5, 0)
-                    task.wait(0.1)
-                    -- Attempt to throw (simulate click)
+                task.spawn(function()
+                    -- Stick grenade to target
+                    local target_hrp = target_player.Character and target_player.Character:FindFirstChild("HumanoidRootPart")
+                    if target_hrp then
+                        grenade.Handle.CFrame = target_hrp.CFrame
+                        -- Weld grenade to target
+                        local weld = Instance.new("WeldConstraint")
+                        weld.Part0 = grenade.Handle
+                        weld.Part1 = target_hrp
+                        weld.Parent = grenade.Handle
+                    end
+                    -- Equip and throw
                     local humanoid = char:FindFirstChildOfClass("Humanoid")
                     if humanoid then
                         humanoid:EquipTool(grenade)
-                        task.wait(0.1)
-                        -- Simulate mouse click to pull pin
-                        pcall(function()
-                            grenade:Activate()
-                        end)
-                        task.wait(0.2)
-                        -- Simulate mouse click again to throw
-                        pcall(function()
-                            grenade:Activate()
-                        end)
-                        task.wait(0.2)
+                        task.wait(0.05)
+                        pcall(function() grenade:Activate() end)
+                        task.wait(0.05)
+                        pcall(function() grenade:Activate() end)
                     end
-                end
+                end)
             end
         end
         Phowg:Chat("Nuked " .. target_player.Name .. " with " .. bomb_count .. " grenades.")
