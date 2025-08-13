@@ -678,7 +678,12 @@ elseif cmd:sub(1, 3) == "k! " then
                     if humanoid then
                         humanoid:EquipTool(grenade)
                         task.wait(0.1)
-                        -- Simulate mouse click to throw
+                        -- Simulate mouse click to pull pin
+                        pcall(function()
+                            grenade:Activate()
+                        end)
+                        task.wait(0.2)
+                        -- Simulate mouse click again to throw
                         pcall(function()
                             grenade:Activate()
                         end)
