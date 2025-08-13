@@ -221,15 +221,14 @@ local function handle_cmd(cmd, sender)
         anti_lag()
 
     elseif cmd == ".reset" then
-        is_looping = false
-        is_voiding = false
-        task.wait(0.5)
-        char = player.Character or player.CharacterAdded:Wait()
-        bkpk = player:WaitForChild("Backpack")
         anti_lag()
         is_voiding = true
-        void_thread = coroutine.create(start_void)
-        coroutine.resume(void_thread)
+        if void_thread then
+            coroutine.resume(void_thread)
+        else
+            void_thread = coroutine.create(start_void)
+            coroutine.resume(void_thread)
+        end
 
     elseif cmd == ".leave" then
         player:Kick("Leaving...")
@@ -344,7 +343,9 @@ local function handle_cmd(cmd, sender)
                 local myHRP = char.HumanoidRootPart
                 local targetHRP = fling_target.Character.HumanoidRootPart
                 reset_velocity()
-                myHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 1, 0)
+                -- Stick to the target's HumanoidRootPart
+                myHRP.CFrame = targetHRP.CFrame * CFrame.new(0, 0, 0)
+                -- Apply strong angular velocity to fling
                 myHRP.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
                 myHRP.AssemblyAngularVelocity = Vector3.new(9999, 9999, 9999)
             else
@@ -355,7 +356,7 @@ local function handle_cmd(cmd, sender)
                 end
             end
         end)
-        Phowg:Chat("Flinging " .. fling_target.Name .. ". Use .stopfling to stop.")
+        Phowg:Chat("Sticking and flinging " .. fling_target.Name .. " non-stop. Use .stopfling to stop.")
 
     elseif cmd == ".flingall" then
         -- Fling all players except self and owner
@@ -711,38 +712,14 @@ local function KO(v)
 end
 
 local function setup_anti_stomp()
-    local ko = KO(player)
-    if not ko then return end
-    local debounce = false
-    ko.Changed:Connect(function(val)
-        if val == true and not debounce then
-            debounce = true
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                -- Teleport far away to avoid stomp
-                char.HumanoidRootPart.CFrame = CFrame.new(get_big_num(), get_big_num(), get_big_num())
-                char.HumanoidRootPart.Anchored = true
+    -- Simple anti-stomp: instantly kill self if KO'd
+    game:GetService("RunService").Stepped:Connect(function()
+        local char = player.Character
+        if char and char:FindFirstChild("BodyEffects") and char.BodyEffects:FindFirstChild("K.O") and char.BodyEffects["K.O"].Value == true then
+            if char:FindFirstChild("Humanoid") then
+                char.Humanoid:ChangeState("Dead")
             end
-            if char and char:FindFirstChild("Humanoid") then
-                char.Humanoid.Health = 0
-            end
-            task.wait(1)
-            is_voiding = true
-            void_thread = coroutine.create(start_void)
-            coroutine.resume(void_thread)
         end
-    end)
-    -- Force kill if health is 0
-    if char and char:FindFirstChild("Humanoid") then
-        char.Humanoid:GetPropertyChangedSignal("Health"):Connect(function()
-            if char.Humanoid.Health <= 0 then
-                char.Humanoid.Health = 0
-                player:LoadCharacter() -- Force respawn/reset
-            end
-        end)
-    end
-    -- Reset debounce on respawn
-    player.CharacterAdded:Connect(function()
-        debounce = false
     end)
 end
 
