@@ -23,6 +23,9 @@ local fling_target = nil
 local framework_module = {_tp_bomb_conn = nil}
 
 local Phowg = {}
+
+workspace.FallenPartsDestroyHeight = 0/0
+
 function Phowg:Chat(Message)
     self.TextChatService = chat
     self.TextChatService.TextChannels.RBXGeneral:SendAsync(Message)
@@ -779,6 +782,7 @@ chat.MessageReceived:Connect(function(msg)
         end
     end
 end)
+
 
 
 
